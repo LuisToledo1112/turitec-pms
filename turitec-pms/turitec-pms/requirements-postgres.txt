@@ -1,7 +1,0 @@
-# Dependencia OPCIONAL, solo para usar PostgreSQL (ver README, Paso 5B).
-# Instalar solo después de que `pip install -r requirements.txt` ya funcionó:
-#   pip install -r requirements-postgres.txt
-# Versión 2.9.11 o superior: es la primera con rueda precompilada para
-# Python 3.14 en Windows (cp314). La 2.9.9 intentaba compilar desde el
-# código fuente y pedía "Microsoft Visual C++ 14.0 or greater".
-psycopg2-binary==2.9.11

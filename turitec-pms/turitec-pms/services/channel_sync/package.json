@@ -1,1 +1,0 @@
-{"description":"Servicio Node.js que sincroniza (de forma simulada) la disponibilidad de Turitec PMS con Booking y Airbnb.","engines":{"node":">=18"},"main":"sync.js","name":"turitec-channel-sync","scripts":{"start":"node sync.js","sync":"node sync.js 2026-11-01 2026-11-30"},"type":"commonjs","version":"1.0.0"}
