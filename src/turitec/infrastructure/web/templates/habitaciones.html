@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Habitaciones{% endblock %}
+{% block contenido %}
+<h1>Habitaciones</h1>
+<p class="subtitulo">12 habitaciones demo: sencillas, dobles y suites. Precios en MXN por noche.</p>
+
+{% if session.get('usuario_rol') == 'administrador' %}
+<section class="tarjeta">
+  <h2>{% if habitacion_editar %}Editar habitación {{ habitacion_editar.numero }}{% else %}Agregar habitación{% endif %}</h2>
+  <form method="post" {% if habitacion_editar %}action="{{ url_for('main.editar_habitacion', hid=habitacion_editar.id) }}"{% endif %} class="form-grid">
+    <label>Número <input name="numero" required placeholder="Ej. 106" value="{{ habitacion_editar.numero if habitacion_editar else '' }}"></label>
+    <label>Tipo
+      <select name="tipo">
+        {% for t in ['Sencilla', 'Doble', 'Suite'] %}
+        <option {% if habitacion_editar and habitacion_editar.tipo == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Precio por noche (MXN) <input type="number" step="0.01" min="0" name="precio_noche" required placeholder="850" value="{{ habitacion_editar.precio_noche if habitacion_editar else '' }}"></label>
+    <label>Capacidad <input type="number" min="1" max="6" name="capacidad" value="{{ habitacion_editar.capacidad if habitacion_editar else 2 }}"></label>
+    <label>Estado
+      <select name="estado">
+        {% for e in ['libre', 'ocupada', 'limpieza', 'mantenimiento'] %}
+        <option value="{{ e }}" {% if habitacion_editar and habitacion_editar.estado == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Descripción <input name="descripcion" placeholder="Vista al jardín, cama king size..." value="{{ habitacion_editar.descripcion if habitacion_editar else '' }}"></label>
+    <button type="submit" class="btn btn-azul btn-grande">{% if habitacion_editar %}Guardar cambios{% else %}Guardar habitación{% endif %}</button>
+    {% if habitacion_editar %}<a class="btn" href="{{ url_for('main.habitaciones') }}">Cancelar</a>{% endif %}
+  </form>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <table>
+    <thead><tr><th>Número</th><th>Tipo</th><th>Precio/noche</th><th>Capacidad</th><th>Estado</th><th>Descripción</th><th></th></tr></thead>
+    <tbody>
+      {% for h in habitaciones %}
+      <tr>
+        <td><strong>{{ h.numero }}</strong></td>
+        <td>{{ h.tipo }}</td>
+        <td>${{ "%.2f"|format(h.precio_noche) }}</td>
+        <td>{{ h.capacidad }}</td>
+        <td><span class="badge badge-{{ h.estado }}">{{ h.estado }}</span></td>
+        <td>{{ h.descripcion }}</td>
+        <td class="acciones">
+          {% if session.get('usuario_rol') == 'administrador' %}
+          <a class="btn btn-azul btn-pequeno" href="{{ url_for('main.editar_habitacion', hid=h.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('main.eliminar_habitacion', hid=h.id) }}" data-confirm="¿Eliminar la habitación {{ h.numero }}?">
+            <button class="btn btn-peligro btn-pequeno" type="submit">Eliminar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

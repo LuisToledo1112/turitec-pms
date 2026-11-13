@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Panel{% endblock %}
+{% block contenido %}
+<h1>Panel de control</h1>
+<p class="subtitulo">Hoy es {{ hoy.strftime('%d/%m/%Y') }} · Posada Turitec, Tuxtla Gutiérrez</p>
+
+<div class="tarjetas-resumen">
+  <div class="tarjeta stat"><span class="numero">{{ ocupadas_hoy }}</span><span class="etiqueta">Habitaciones ocupadas hoy</span></div>
+  <div class="tarjeta stat"><span class="numero">{{ activas }}</span><span class="etiqueta">Reservaciones activas</span></div>
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(ingresos_mes) }}</span><span class="etiqueta">Ingresos del mes (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero">{{ tasa }}%</span><span class="etiqueta">Tasa de ocupación · nov 2026</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="tarjeta">
+    <h2>Próximas llegadas</h2>
+    {% if proximas %}
+    <table>
+      <thead><tr><th>Huésped</th><th>Habitación</th><th>Entrada</th><th>Salida</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for r in proximas %}
+        <tr>
+          <td>{{ hues_dict[r.huesped_id].nombre }}</td>
+          <td>{{ hab_dict[r.habitacion_id].numero }}</td>
+          <td>{{ r.fecha_entrada.strftime('%d/%m/%Y') }}</td>
+          <td>{{ r.fecha_salida.strftime('%d/%m/%Y') }}</td>
+          <td><span class="badge badge-{{ r.estado }}">{{ r.estado }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No hay llegadas próximas.</p>
+    {% endif %}
+    <a class="btn btn-azul" href="{{ url_for('main.reservaciones') }}">Nueva reservación</a>
+    <a class="btn btn-naranja" href="{{ url_for('main.calendario') }}">Ver calendario</a>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Habitaciones ({{ habitaciones|length }})</h2>
+    <table>
+      <thead><tr><th>Número</th><th>Tipo</th><th>Precio/noche</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for h in habitaciones %}
+        <tr>
+          <td><strong>{{ h.numero }}</strong></td>
+          <td>{{ h.tipo }}</td>
+          <td>${{ "%.2f"|format(h.precio_noche) }}</td>
+          <td><span class="badge badge-{{ h.estado }}">{{ h.estado }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

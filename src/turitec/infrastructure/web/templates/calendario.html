@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titulo %}Calendario de ocupación{% endblock %}
+{% block contenido %}
+<h1>Calendario de ocupación — {{ nombre_mes }} {{ anio }}</h1>
+<p class="subtitulo">Rack de disponibilidad: cada fila es una habitación y cada columna un día.</p>
+
+<div class="leyenda">
+  <span><i class="celda-libre"></i> Libre</span>
+  <span><i class="celda-reservada"></i> Reservada</span>
+  <span><i class="celda-check-in"></i> Ocupada (check-in)</span>
+  <span><i class="celda-check-out"></i> Check-out</span>
+</div>
+
+<div class="navegacion-mes">
+  <a class="btn" href="{{ url_for('main.calendario', anio=mes_anterior.year, mes=mes_anterior.month) }}">← {{ mes_anterior.strftime('%m/%Y') }}</a>
+  <a class="btn" href="{{ url_for('main.calendario', anio=mes_siguiente.year, mes=mes_siguiente.month) }}">{{ mes_siguiente.strftime('%m/%Y') }} →</a>
+</div>
+
+<div class="tabla-scroll">
+<table class="rack">
+  <thead>
+    <tr><th>Habitación</th>
+      {% for f in fechas %}<th>{{ f.day }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for h in habitaciones %}
+    <tr>
+      <td class="rack-hab"><strong>{{ h.numero }}</strong><br><small>{{ h.tipo }}</small></td>
+      {% for dia in range(1, dias + 1) %}
+      <td class="rack-celda celda-{{ matriz[h.id][dia] }}" title="Hab. {{ h.numero }} · día {{ dia }} · {{ matriz[h.id][dia] }}"></td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="subtitulo">Pasa el cursor sobre una celda para ver su estado. Para probar la sincronización con canales externos, usa el botón de abajo (simulación, sin llamadas reales).</p>
+<form method="post" action="{{ url_for('main.api_sync') }}" id="form-sync">
+  <button type="button" class="btn btn-naranja" id="btn-sync">Sincronizar disponibilidad con Booking y Airbnb</button>
+  <span id="resultado-sync" class="aviso"></span>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('btn-sync')?.addEventListener('click', async () => {
+  const r = await fetch('/api/sync', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({fecha_inicio: '{{ anio }}-{{ "%02d"|format(mes) }}-01', fecha_fin: '{{ anio }}-{{ "%02d"|format(mes) }}-{{ dias }}'})});
+  const d = await r.json();
+  document.getElementById('resultado-sync').textContent = d.sincronizado ? `Sincronización simulada: ${d.resultados.length} envíos a canales externos.` : 'Error al sincronizar.';
+});
+</script>
+{% endblock %}

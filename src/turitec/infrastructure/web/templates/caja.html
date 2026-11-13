@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block titulo %}Caja — Cobranza{% endblock %}
+{% block contenido %}
+<h1>Caja — Cobranza</h1>
+<p class="subtitulo">Elige alimentos, paquetes o habitaciones, cobra y entrega el recibo. El total incluye IVA del 16%.</p>
+{% if session.get('usuario_rol') == 'administrador' %}<p><a class="btn btn-azul" href="{{ url_for('main.productos') }}">⚙️ Administrar productos (agregar, editar, eliminar)</a> <a class="btn" href="{{ url_for('main.reporte_ventas') }}">📊 Reporte de ventas</a> <a class="btn" href="{{ url_for('main.corte') }}">🧾 Corte del día</a></p>{% endif %}
+
+<div class="caja-dos-col">
+  <div>
+    <section class="tarjeta">
+      <h2>🍽️ Alimentos</h2>
+      <div class="grid-productos">
+        {% for p in alimentos %}
+        <button type="button" class="btn-producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio }}" data-categoria="alimentos" {% if p.stock == 0 %}disabled title="Agotado: sin stock"{% endif %}>
+          <strong>{{ p.nombre }}</strong>
+          <small>{{ p.descripcion }}</small><br>
+          <span class="precio">${{ "%.2f"|format(p.precio) }} MXN</span>
+          {% if p.stock is none %}<small> · Stock: —</small>{% elif p.stock == 0 %}<small> · Agotado</small>{% else %}<small> · Stock: {{ p.stock }}</small>{% endif %}
+        </button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>🎁 Paquetes</h2>
+      <div class="grid-productos">
+        {% for p in paquetes %}
+        <button type="button" class="btn-producto" data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" data-precio="{{ p.precio }}" data-categoria="paquetes" {% if p.stock == 0 %}disabled title="Agotado: sin stock"{% endif %}>
+          <strong>{{ p.nombre }}</strong>
+          <small>{{ p.descripcion }}</small><br>
+          <span class="precio">${{ "%.2f"|format(p.precio) }} MXN</span>
+          {% if p.stock is none %}<small> · Stock: —</small>{% elif p.stock == 0 %}<small> · Agotado</small>{% else %}<small> · Stock: {{ p.stock }}</small>{% endif %}
+        </button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>🛏️ Habitaciones</h2>
+      <p class="subtitulo">Se cobra el precio por noche multiplicado por las noches.</p>
+      <div class="form-grid">
+        <label>Habitación
+          <select id="hab-select">
+            {% for h in habitaciones %}
+            <option value="{{ h.id }}" data-precio="{{ h.precio_noche }}" data-numero="{{ h.numero }}" data-tipo="{{ h.tipo }}">{{ h.numero }} · {{ h.tipo }} · ${{ "%.2f"|format(h.precio_noche) }}/noche</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Noches <input type="number" id="hab-noches" min="1" value="1"></label>
+        <button type="button" class="btn btn-azul" id="btn-agregar-hab">Agregar habitación</button>
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="tarjeta">
+      <h2>🧾 Venta</h2>
+      <form method="post" action="{{ url_for('main.cobrar') }}" id="form-caja">
+        <div class="form-grid">
+          <label>Cliente
+            <input type="text" name="cliente" id="cliente" placeholder="Cliente general" value="Cliente general">
+          </label>
+          <label>Huésped (opcional)
+            <select name="huesped_id" id="huesped_id">
+              <option value="">— Sin huésped —</option>
+              {% for h in huespedes %}
+              <option value="{{ h.id }}">{{ h.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <div class="tabla-scroll">
+          <table>
+            <thead><tr><th>Concepto</th><th>Precio</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead>
+            <tbody id="carrito-cuerpo">
+              <tr><td colspan="5">Aún no hay productos. Toca un alimento, un paquete o agrega una habitación.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <table class="totales">
+          <tr><td>Subtotal</td><td id="txt-subtotal">$0.00 MXN</td></tr>
+          <tr><td>IVA (16%)</td><td id="txt-iva">$0.00 MXN</td></tr>
+          <tr><td><strong>Total</strong></td><td><strong id="txt-total">$0.00 MXN</strong></td></tr>
+        </table>
+
+        <h3>Método de pago</h3>
+        <div class="metodo-pago">
+          <label><input type="radio" name="metodo_pago" value="efectivo" checked> 💵 Efectivo</label>
+          <label><input type="radio" name="metodo_pago" value="tarjeta"> 💳 Tarjeta</label>
+          <label><input type="radio" name="metodo_pago" value="transferencia"> 🏦 Transferencia</label>
+        </div>
+
+        <div class="form-grid" id="campo-monto">
+          <label>¿Con cuánto paga? (efectivo)
+            <input type="number" name="monto_recibido" id="monto_recibido" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <p>Cambio: <strong id="txt-cambio">$0.00 MXN</strong></p>
+        </div>
+
+        <h3>Documento</h3>
+        <div class="metodo-pago">
+          <label><input type="radio" name="documento" value="recibo" checked> 🧾 Recibo sencillo</label>
+          <label><input type="radio" name="documento" value="factura"> 📄 Factura</label>
+        </div>
+
+        <input type="hidden" name="items" id="items-json" value="[]">
+        <button type="submit" class="btn btn-azul btn-grande">💰 Cobrar</button>
+      </form>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Últimas ventas</h2>
+      {% if ventas %}
+      <table>
+        <thead><tr><th>Folio</th><th>Cliente</th><th>Total</th><th>Pago</th><th></th><th></th></tr></thead>
+        <tbody>
+          {% for v in ventas %}
+          <tr>
+            <td>{{ v.folio }}</td>
+            <td>{{ v.cliente }}</td>
+            <td>${{ "%.2f"|format(v.total) }}</td>
+            <td>{{ v.metodo_pago }}</td>
+            <td><a class="btn btn-pequeno" href="{{ url_for('main.ver_recibo', vid=v.id) }}">Recibo</a></td>
+            <td>
+              {% if v.id in facturas_venta %}
+              <a class="btn btn-pequeno" href="{{ url_for('main.ver_factura', fid=facturas_venta[v.id]) }}">Ver factura</a>
+              {% else %}
+              <a class="btn btn-pequeno" href="{{ url_for('main.facturar_venta', vid=v.id) }}">📄 Facturar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="subtitulo">Aún no hay ventas registradas.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var carrito = [];
+  var IVA = 0.16;
+  var cuerpo = document.getElementById('carrito-cuerpo');
+  var montoInput = document.getElementById('monto_recibido');
+  var campoMonto = document.getElementById('campo-monto');
+
+  function dinero(n) { return '$' + n.toFixed(2) + ' MXN'; }
+
+  function totales() {
+    var subtotal = carrito.reduce(function (s, it) { return s + it.precio * it.cantidad; }, 0);
+    var iva = Math.round(subtotal * IVA * 100) / 100;
+    return { subtotal: subtotal, iva: iva, total: subtotal + iva };
+  }
+
+  function metodo() {
+    var sel = document.querySelector('input[name="metodo_pago"]:checked');
+    return sel ? sel.value : 'efectivo';
+  }
+
+  function render() {
+    if (!carrito.length) {
+      cuerpo.innerHTML = '<tr><td colspan="5">Aún no hay productos. Toca un alimento, un paquete o agrega una habitación.</td></tr>';
+    } else {
+      cuerpo.innerHTML = carrito.map(function (it, i) {
+        return '<tr><td>' + it.concepto + '</td><td>' + dinero(it.precio) + '</td>' +
+          '<td><button type="button" class="btn btn-pequeno" data-accion="menos" data-i="' + i + '">−</button> ' + it.cantidad +
+          ' <button type="button" class="btn btn-pequeno" data-accion="mas" data-i="' + i + '">+</button></td>' +
+          '<td>' + dinero(it.precio * it.cantidad) + '</td>' +
+          '<td><button type="button" class="btn btn-peligro btn-pequeno" data-accion="quitar" data-i="' + i + '">✕</button></td></tr>';
+      }).join('');
+    }
+    var t = totales();
+    document.getElementById('txt-subtotal').textContent = dinero(t.subtotal);
+    document.getElementById('txt-iva').textContent = dinero(t.iva);
+    document.getElementById('txt-total').textContent = dinero(t.total);
+    var m = metodo();
+    campoMonto.style.display = (m === 'efectivo') ? '' : 'none';
+    var recibido = parseFloat(montoInput.value) || 0;
+    var cambio = (m === 'efectivo') ? Math.max(0, recibido - t.total) : 0;
+    document.getElementById('txt-cambio').textContent = dinero(cambio);
+  }
+
+  document.querySelectorAll('.btn-producto').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = parseInt(btn.dataset.id, 10);
+      var existente = carrito.find(function (it) { return it.tipo === 'producto' && it.producto_id === id; });
+      if (existente) { existente.cantidad += 1; }
+      else {
+        carrito.push({ tipo: 'producto', producto_id: id, concepto: btn.dataset.nombre, categoria: btn.dataset.categoria, precio: parseFloat(btn.dataset.precio), cantidad: 1 });
+      }
+      render();
+    });
+  });
+
+  document.getElementById('btn-agregar-hab').addEventListener('click', function () {
+    var sel = document.getElementById('hab-select');
+    var opt = sel.options[sel.selectedIndex];
+    var noches = Math.max(1, parseInt(document.getElementById('hab-noches').value, 10) || 1);
+    var habId = parseInt(sel.value, 10);
+    var precioNoche = parseFloat(opt.dataset.precio);
+    var existente = carrito.find(function (it) { return it.tipo === 'habitacion' && it.habitacion_id === habId && it.noches === noches; });
+    if (existente) { existente.cantidad += 1; }
+    else {
+      carrito.push({
+        tipo: 'habitacion', habitacion_id: habId, noches: noches,
+        concepto: 'Habitación ' + opt.dataset.numero + ' (' + opt.dataset.tipo + ') — ' + noches + ' noche(s)',
+        categoria: 'habitaciones', precio: precioNoche * noches, cantidad: 1
+      });
+    }
+    render();
+  });
+
+  cuerpo.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-accion]');
+    if (!btn) return;
+    var i = parseInt(btn.dataset.i, 10);
+    var accion = btn.dataset.accion;
+    if (accion === 'mas') carrito[i].cantidad += 1;
+    else if (accion === 'menos') { carrito[i].cantidad -= 1; if (carrito[i].cantidad < 1) carrito.splice(i, 1); }
+    else if (accion === 'quitar') carrito.splice(i, 1);
+    render();
+  });
+
+  document.querySelectorAll('input[name="metodo_pago"]').forEach(function (r) {
+    r.addEventListener('change', render);
+  });
+  montoInput.addEventListener('input', render);
+
+  document.getElementById('form-caja').addEventListener('submit', function (e) {
+    if (!carrito.length) {
+      e.preventDefault();
+      alert('Elige al menos un producto, paquete o habitación para cobrar.');
+      return;
+    }
+    if (metodo() === 'efectivo') {
+      var t = totales();
+      var recibido = parseFloat(montoInput.value) || 0;
+      if (recibido < t.total) {
+        e.preventDefault();
+        alert('El monto recibido ($' + recibido.toFixed(2) + ') es menor que el total ($' + t.total.toFixed(2) + ').');
+        return;
+      }
+    }
+    document.getElementById('items-json').value = JSON.stringify(carrito);
+  });
+
+  render();
+})();
+</script>
+{% endblock %}

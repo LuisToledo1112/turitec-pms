@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Factura {{ factura.folio }}{% endblock %}
+{% block contenido %}
+<div class="tarjeta factura">
+  <h1>Comprobante de pago — Factura {{ factura.folio }}</h1>
+  <p><strong>Posada Turitec</strong> · Tuxtla Gutiérrez, Chiapas · Fecha de emisión: {{ factura.fecha_emision.strftime('%d/%m/%Y') }}</p>
+  <hr>
+  <p><strong>Huésped:</strong> {{ huesped.nombre }} · <strong>RFC:</strong> {{ factura.rfc or '—' }} · <strong>Correo:</strong> {{ huesped.email }}</p>
+  <p><strong>Reservación #{{ reserva.id }}:</strong> Habitación {{ habitacion.numero }} ({{ habitacion.tipo }}) · {{ reserva.fecha_entrada.strftime('%d/%m/%Y') }} → {{ reserva.fecha_salida.strftime('%d/%m/%Y') }} · {{ (reserva.fecha_salida - reserva.fecha_entrada).days }} noches</p>
+  {% if consumos %}
+  <h2>Consumos</h2>
+  <ul>
+    {% for c in consumos %}<li>{{ c.concepto }} — ${{ "%.2f"|format(c.monto) }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <table class="totales">
+    <tr><td>Subtotal</td><td>${{ "%.2f"|format(factura.subtotal) }} MXN</td></tr>
+    <tr><td>IVA (16%)</td><td>${{ "%.2f"|format(factura.iva) }} MXN</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>${{ "%.2f"|format(factura.total) }} MXN</strong></td></tr>
+  </table>
+  <p class="subtitulo">Comprobante generado por Turitec PMS. Datos CFDI (RFC) guardados; el timbrado real no está incluido en esta demo.</p>
+  <button class="btn btn-azul btn-grande" onclick="window.print()">🖨️ Imprimir comprobante</button>
+  <a class="btn" href="{{ url_for('main.facturacion') }}">Volver a facturación</a>
+</div>
+{% endblock %}

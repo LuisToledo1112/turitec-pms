@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block titulo %}Reporte de ventas{% endblock %}
+{% block contenido %}
+<h1>Reporte de ventas — {{ nombre_mes }} {{ reporte.anio }}</h1>
+<p class="subtitulo">Demanda por producto, ganancia o pérdida, cobro por método de pago y facturas del mes.</p>
+
+<form method="get" class="form-grid tarjeta">
+  <label>Año <input type="number" name="anio" value="{{ reporte.anio }}" min="2025" max="2030"></label>
+  <label>Mes <input type="number" name="mes" value="{{ reporte.mes }}" min="1" max="12"></label>
+  <button class="btn btn-azul">Ver reporte</button>
+  <a class="btn" href="{{ url_for('main.reportes', anio=reporte.anio, mes=reporte.mes) }}">Ver ocupación</a>
+</form>
+
+<div class="tarjetas-resumen">
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(reporte.ingresos) }}</span><span class="etiqueta">Ingresos por ventas (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(reporte.costos) }}</span><span class="etiqueta">Costos (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero" style="color: {{ '#7bc47f' if reporte.ganancia >= 0 else '#e57373' }}">${{ "%.2f"|format(reporte.ganancia) }}</span><span class="etiqueta">{% if reporte.ganancia >= 0 %}Ganancia{% else %}Pérdida{% endif %} (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero">{{ reporte.num_ventas }}</span><span class="etiqueta">Ventas</span></div>
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(reporte.ticket_promedio) }}</span><span class="etiqueta">Ticket promedio (MXN)</span></div>
+</div>
+
+{% if reporte.por_producto %}
+<p class="subtitulo">Lo más vendido: <strong>{{ reporte.por_producto[0].concepto }}</strong> ({{ reporte.por_producto[0].cantidad }} vendidos). Lo menos vendido: <strong>{{ reporte.por_producto[-1].concepto }}</strong> ({{ reporte.por_producto[-1].cantidad }}).</p>
+{% endif %}
+
+<section class="tarjeta">
+  <h2>📦 Ventas por producto (demanda)</h2>
+  {% if reporte.por_producto %}
+  <div class="tabla-scroll">
+    <table>
+      <thead><tr><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Ingresos</th><th>Costos</th><th>Ganancia</th></tr></thead>
+      <tbody>
+        {% for p in reporte.por_producto %}
+        <tr>
+          <td><strong>{{ p.concepto }}</strong></td>
+          <td>{{ p.categoria }}</td>
+          <td>{{ p.cantidad }}</td>
+          <td>${{ "%.2f"|format(p.ingresos) }}</td>
+          <td>${{ "%.2f"|format(p.costos) }}</td>
+          <td style="color: {{ '#7bc47f' if p.ganancia >= 0 else '#e57373' }}"><strong>${{ "%.2f"|format(p.ganancia) }}</strong>{% if p.ganancia < 0 %} ⚠️ pérdida{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="subtitulo">La ganancia es ingresos menos costo. Captura el costo de cada producto en Administrar productos; si el costo es 0, la ganancia es igual al ingreso.</p>
+  {% else %}
+  <p class="subtitulo">No hay ventas este mes.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2>🏷️ Ventas por categoría</h2>
+  {% if reporte.por_categoria %}
+  <table>
+    <thead><tr><th>Categoría</th><th>Cantidad</th><th>Ingresos</th></tr></thead>
+    <tbody>
+      {% for c in reporte.por_categoria %}
+      <tr><td>{{ c.categoria }}</td><td>{{ c.cantidad }}</td><td>${{ "%.2f"|format(c.ingresos) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="subtitulo">No hay ventas este mes.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2>💳 Ventas por método de pago</h2>
+  {% if reporte.por_metodo %}
+  <table>
+    <thead><tr><th>Método</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for metodo, total in reporte.por_metodo.items() %}
+      <tr><td>{{ metodo }}</td><td>${{ "%.2f"|format(total) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="subtitulo">No hay ventas este mes.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2>📅 Ventas por día (MXN)</h2>
+  <div class="grafico">
+    {% for dia, monto in reporte.por_dia.items() %}
+    <div class="barra-wrap" title="Día {{ dia }}: ${{ '%.2f'|format(monto) }}">
+      <div class="barra" data-valor="{{ monto }}" style="--alto: {{ (monto / 3000 * 100) if monto else 0 }}%"></div>
+      <span class="barra-dia">{{ dia }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="tarjeta">
+  <h2>🧾 Facturas del mes ({{ reporte.num_facturas }}) — Total ${{ "%.2f"|format(reporte.total_facturas) }} MXN</h2>
+  {% if reporte.facturas %}
+  <div class="tabla-scroll">
+    <table>
+      <thead><tr><th>Folio</th><th>Huésped</th><th>Fecha</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        {% for f in reporte.facturas %}
+        <tr>
+          <td>{{ f.folio }}</td>
+          <td>{{ hues_dict[f.huesped_id].nombre if f.huesped_id in hues_dict else '—' }}</td>
+          <td>{{ f.fecha_emision.strftime('%d/%m/%Y') }}</td>
+          <td>${{ "%.2f"|format(f.total) }}</td>
+          <td><a class="btn btn-pequeno" href="{{ url_for('main.ver_factura', fid=f.id) }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="subtitulo">No hay facturas este mes.</p>
+  {% endif %}
+  <a class="btn" href="{{ url_for('main.facturacion') }}">Ir a Facturación</a>
+</section>
+{% endblock %}

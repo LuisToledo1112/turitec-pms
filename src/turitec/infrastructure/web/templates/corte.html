@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Corte del día{% endblock %}
+{% block contenido %}
+<h1>Corte del día — {{ resumen.dia.strftime('%d/%m/%Y') }}</h1>
+<p class="subtitulo">El cierre de caja: cuánto se vendió, con qué pagaron y cuánto efectivo debe haber en caja.</p>
+
+<form method="get" class="form-grid tarjeta">
+  <label>Fecha <input type="date" name="fecha" value="{{ fecha }}"></label>
+  <button class="btn btn-azul">Ver corte</button>
+</form>
+
+{% if cierre %}
+<div class="tarjeta">
+  <p><strong>✅ Este día ya está cerrado</strong> (registrado el {{ cierre.creada_en.strftime('%d/%m/%Y %H:%M') }}). Los números de abajo son el cierre guardado.</p>
+</div>
+{% endif %}
+
+<div class="tarjetas-resumen">
+  <div class="tarjeta stat"><span class="numero">{{ resumen.num_ventas }}</span><span class="etiqueta">Ventas</span></div>
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(resumen.total_ventas) }}</span><span class="etiqueta">Total vendido (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(resumen.efectivo_neto) }}</span><span class="etiqueta">Efectivo neto en caja (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero">{{ resumen.num_facturas }}</span><span class="etiqueta">Facturas del día</span></div>
+</div>
+
+<section class="tarjeta">
+  <h2>Desglose</h2>
+  <table class="totales">
+    <tr><td>Efectivo (ventas)</td><td>${{ "%.2f"|format(resumen.efectivo) }} MXN</td></tr>
+    <tr><td>Tarjeta</td><td>${{ "%.2f"|format(resumen.tarjeta) }} MXN</td></tr>
+    <tr><td>Transferencia</td><td>${{ "%.2f"|format(resumen.transferencia) }} MXN</td></tr>
+    <tr><td>Efectivo recibido</td><td>${{ "%.2f"|format(resumen.recibido_efectivo) }} MXN</td></tr>
+    <tr><td>Cambio entregado</td><td>${{ "%.2f"|format(resumen.cambio_total) }} MXN</td></tr>
+    <tr><td><strong>Efectivo neto en caja</strong></td><td><strong>${{ "%.2f"|format(resumen.efectivo_neto) }} MXN</strong></td></tr>
+    <tr><td>Facturas del día</td><td>${{ "%.2f"|format(resumen.total_facturas) }} MXN ({{ resumen.num_facturas }})</td></tr>
+  </table>
+  {% if not cierre %}
+  <form method="post" action="{{ url_for('main.cerrar_corte') }}" data-confirm="¿Cerrar el día {{ resumen.dia.strftime('%d/%m/%Y') }}? Ya no se podrá volver a cerrar ese día.">
+    <input type="hidden" name="fecha" value="{{ fecha }}">
+    <button type="submit" class="btn btn-azul btn-grande">🧾 Cerrar día</button>
+  </form>
+  {% else %}
+  <button class="btn btn-azul btn-grande" onclick="window.print()">🖨️ Imprimir corte</button>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2>Últimos cierres</h2>
+  {% if cierres %}
+  <table>
+    <thead><tr><th>Fecha</th><th>Ventas</th><th>Total</th><th>Efectivo neto</th></tr></thead>
+    <tbody>
+      {% for c in cierres %}
+      <tr>
+        <td>{{ c.fecha.strftime('%d/%m/%Y') }}</td>
+        <td>{{ c.num_ventas }}</td>
+        <td>${{ "%.2f"|format(c.total_ventas) }}</td>
+        <td>${{ "%.2f"|format(c.efectivo_neto) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="subtitulo">Aún no hay cierres registrados.</p>
+  {% endif %}
+  <a class="btn" href="{{ url_for('main.caja') }}">Volver a Caja</a>
+</section>
+{% endblock %}

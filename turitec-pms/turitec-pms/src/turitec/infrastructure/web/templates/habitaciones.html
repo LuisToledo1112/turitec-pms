@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Habitaciones{% endblock %}
+{% block contenido %}
+<h1>Habitaciones</h1>
+<p class="subtitulo">12 habitaciones demo: sencillas, dobles y suites. Precios en MXN por noche.</p>
+
+<section class="tarjeta">
+  <h2>Agregar habitación</h2>
+  <form method="post" class="form-grid">
+    <label>Número <input name="numero" required placeholder="Ej. 106"></label>
+    <label>Tipo
+      <select name="tipo"><option>Sencilla</option><option>Doble</option><option>Suite</option></select>
+    </label>
+    <label>Precio por noche (MXN) <input type="number" step="0.01" min="0" name="precio_noche" required placeholder="850"></label>
+    <label>Capacidad <input type="number" min="1" max="6" name="capacidad" value="2"></label>
+    <label>Estado
+      <select name="estado"><option value="libre">libre</option><option value="ocupada">ocupada</option><option value="limpieza">limpieza</option><option value="mantenimiento">mantenimiento</option></select>
+    </label>
+    <label>Descripción <input name="descripcion" placeholder="Vista al jardín, cama king size..."></label>
+    <button type="submit" class="btn btn-azul btn-grande">Guardar habitación</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <table>
+    <thead><tr><th>Número</th><th>Tipo</th><th>Precio/noche</th><th>Capacidad</th><th>Estado</th><th>Descripción</th><th></th></tr></thead>
+    <tbody>
+      {% for h in habitaciones %}
+      <tr>
+        <td><strong>{{ h.numero }}</strong></td>
+        <td>{{ h.tipo }}</td>
+        <td>${{ "%.2f"|format(h.precio_noche) }}</td>
+        <td>{{ h.capacidad }}</td>
+        <td><span class="badge badge-{{ h.estado }}">{{ h.estado }}</span></td>
+        <td>{{ h.descripcion }}</td>
+        <td>
+          <form method="post" action="{{ url_for('main.eliminar_habitacion', hid=h.id) }}" data-confirm="¿Eliminar la habitación {{ h.numero }}?">
+            <button class="btn btn-peligro btn-pequeno" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

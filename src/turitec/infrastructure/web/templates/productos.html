@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Productos — Caja{% endblock %}
+{% block contenido %}
+<h1>Productos en venta — Inventario</h1>
+<p class="subtitulo">Aquí agregas, editas o eliminas los alimentos y paquetes que se venden en Caja, con su cantidad en inventario. Solo los productos activos aparecen para cobrar. Si un producto tiene cantidad, cada venta la descuenta y no deja vender más de lo que hay; si la dejas vacía, se vende sin control de stock.</p>
+
+<section class="tarjeta">
+  <h2>{% if producto_editar %}Editar producto{% else %}Nuevo producto{% endif %}</h2>
+  <form method="post" {% if producto_editar %}action="{{ url_for('main.editar_producto', pid=producto_editar.id) }}"{% endif %} class="form-grid">
+    <label>Nombre
+      <input type="text" name="nombre" required value="{{ producto_editar.nombre if producto_editar else '' }}" placeholder="Ej. Desayuno buffet">
+    </label>
+    <label>Categoría
+      <select name="categoria">
+        <option value="alimentos" {% if producto_editar and producto_editar.categoria == 'alimentos' %}selected{% endif %}>🍽️ Alimentos</option>
+        <option value="paquetes" {% if producto_editar and producto_editar.categoria == 'paquetes' %}selected{% endif %}>🎁 Paquetes</option>
+      </select>
+    </label>
+    <label>Precio (MXN)
+      <input type="number" name="precio" min="0" step="0.01" required value="{{ producto_editar.precio if producto_editar else '' }}" placeholder="0.00">
+    </label>
+    <label>Costo (MXN) — para calcular ganancia o pérdida
+      <input type="number" name="costo" min="0" step="0.01" value="{{ producto_editar.costo if producto_editar else '' }}" placeholder="0.00">
+    </label>
+    <label>Cantidad en inventario (stock)
+      <input type="number" name="stock" min="0" step="1" value="{{ producto_editar.stock if producto_editar and producto_editar.stock is not none else '' }}" placeholder="Vacío = sin control">
+      <small>Si la cantidad es 0, el producto se muestra como Agotado hasta que registres nuevo stock.</small>
+    </label>
+    <label>Descripción
+      <input type="text" name="descripcion" value="{{ producto_editar.descripcion if producto_editar else '' }}" placeholder="Qué incluye (opcional)">
+    </label>
+    {% if producto_editar %}
+    <label><input type="checkbox" name="activo" {% if producto_editar.activo %}checked{% endif %}> Activo (aparece en Caja)</label>
+    {% endif %}
+    <button type="submit" class="btn btn-azul btn-grande">{% if producto_editar %}Guardar cambios{% else %}Agregar producto{% endif %}</button>
+    {% if producto_editar %}
+    <a class="btn" href="{{ url_for('main.productos') }}">Cancelar</a>
+    {% endif %}
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>Catálogo</h2>
+  <div class="tabla-scroll">
+    <table>
+      <thead><tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Costo</th><th>Stock</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for p in productos %}
+        <tr>
+          <td>{{ p.nombre }}</td>
+          <td>{{ p.categoria }}</td>
+          <td>${{ "%.2f"|format(p.precio) }}</td>
+          <td>${{ "%.2f"|format(p.costo) }}</td>
+          <td>{% if p.stock is none %}—{% elif p.stock == 0 %}🔴 Agotado{% elif p.stock <= 5 %}⚠️ {{ p.stock }} (bajo){% else %}{{ p.stock }}{% endif %}</td>
+          <td>{{ p.descripcion or '—' }}</td>
+          <td>{% if p.activo %}<span class="badge badge-check-in">activo</span>{% else %}<span class="badge badge-cancelada">inactivo</span>{% endif %}</td>
+          <td class="acciones">
+            <a class="btn btn-azul btn-pequeno" href="{{ url_for('main.editar_producto', pid=p.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('main.eliminar_producto', pid=p.id) }}" data-confirm="¿Eliminar {{ p.nombre }}?">
+              <button class="btn btn-peligro btn-pequeno">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="subtitulo">Si un producto ya se vendió alguna vez, al eliminarlo solo se desactiva: deja de aparecer en Caja pero sus recibos se conservan.</p>
+  <a class="btn" href="{{ url_for('main.caja') }}">Volver a Caja</a>
+</section>
+{% endblock %}
