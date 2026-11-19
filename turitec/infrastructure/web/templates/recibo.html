@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Recibo {{ venta.folio }}{% endblock %}
+{% block contenido %}
+<div class="tarjeta recibo">
+  <h1>Recibo de pago — {{ venta.folio }}</h1>
+  <p><strong>Posada Turitec</strong> · Tuxtla Gutiérrez, Chiapas</p>
+  <p>Fecha: {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} · Cliente: {{ venta.cliente }}{% if huesped %} · Huésped: {{ huesped.nombre }}{% endif %}</p>
+  <hr>
+  <table>
+    <thead><tr><th>Concepto</th><th>Precio</th><th>Cant.</th><th>Subtotal</th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.concepto }}</td>
+        <td>${{ "%.2f"|format(item.precio_unitario) }}</td>
+        <td>{{ item.cantidad }}</td>
+        <td>${{ "%.2f"|format(item.precio_unitario * item.cantidad) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <table class="totales">
+    <tr><td>Subtotal</td><td>${{ "%.2f"|format(venta.subtotal) }} MXN</td></tr>
+    <tr><td>IVA (16%)</td><td>${{ "%.2f"|format(venta.iva) }} MXN</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>${{ "%.2f"|format(venta.total) }} MXN</strong></td></tr>
+    <tr><td>Método de pago</td><td><strong>{{ venta.metodo_pago }}</strong></td></tr>
+    <tr><td>Monto recibido</td><td>${{ "%.2f"|format(venta.monto_recibido) }} MXN</td></tr>
+    {% if venta.cambio %}
+    <tr><td><strong>Cambio</strong></td><td><strong>${{ "%.2f"|format(venta.cambio) }} MXN</strong></td></tr>
+    {% endif %}
+  </table>
+  <p class="subtitulo">Gracias por su visita. Recibo generado por Turitec_Soft9K.</p>
+  <button class="btn btn-azul btn-grande" onclick="window.print()">🖨️ Imprimir recibo</button>
+  {% if factura %}
+  <a class="btn btn-azul" href="{{ url_for('main.ver_factura', fid=factura.id) }}">📄 Ver factura {{ factura.folio }}</a>
+  {% else %}
+  <a class="btn" href="{{ url_for('main.facturar_venta', vid=venta.id) }}">📄 Generar factura de esta venta</a>
+  {% endif %}
+  <a class="btn" href="{{ url_for('main.caja') }}">Nueva venta</a>
+</div>
+{% endblock %}

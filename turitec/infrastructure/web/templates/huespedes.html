@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Huéspedes{% endblock %}
+{% block contenido %}
+<h1>Huéspedes</h1>
+<p class="subtitulo">Registra a tus huéspedes con su RFC para poder facturarles después.</p>
+
+{% if session.get('usuario_rol') == 'administrador' %}
+<section class="tarjeta">
+  <h2>{% if huesped_editar %}Editar huésped{% else %}Agregar huésped{% endif %}</h2>
+  <form method="post" {% if huesped_editar %}action="{{ url_for('main.editar_huesped', hid=huesped_editar.id) }}"{% endif %} class="form-grid">
+    <label>Nombre completo <input name="nombre" required placeholder="Ej. Ana María López" value="{{ huesped_editar.nombre if huesped_editar else '' }}"></label>
+    <label>Correo <input type="email" name="email" placeholder="correo@ejemplo.mx" value="{{ huesped_editar.email if huesped_editar else '' }}"></label>
+    <label>Teléfono <input name="telefono" placeholder="961 123 4567" value="{{ huesped_editar.telefono if huesped_editar else '' }}"></label>
+    <label>RFC <input name="rfc" maxlength="13" placeholder="LOMA850101ABC" value="{{ huesped_editar.rfc if huesped_editar else '' }}"></label>
+    <label>Documento <input name="documento" placeholder="INE o pasaporte" value="{{ huesped_editar.documento if huesped_editar else '' }}"></label>
+    <button type="submit" class="btn btn-azul btn-grande">{% if huesped_editar %}Guardar cambios{% else %}Guardar huésped{% endif %}</button>
+    {% if huesped_editar %}<a class="btn" href="{{ url_for('main.huespedes') }}">Cancelar</a>{% endif %}
+  </form>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <table>
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>RFC</th><th>Documento</th><th></th></tr></thead>
+    <tbody>
+      {% for h in huespedes %}
+      <tr>
+        <td><strong>{{ h.nombre }}</strong></td>
+        <td>{{ h.email }}</td>
+        <td>{{ h.telefono }}</td>
+        <td>{{ h.rfc }}</td>
+        <td>{{ h.documento }}</td>
+        <td class="acciones">
+          {% if session.get('usuario_rol') == 'administrador' %}
+          <a class="btn btn-azul btn-pequeno" href="{{ url_for('main.editar_huesped', hid=h.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('main.eliminar_huesped', hid=h.id) }}" data-confirm="¿Eliminar a {{ h.nombre }}?">
+            <button class="btn btn-peligro btn-pequeno" type="submit">Eliminar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

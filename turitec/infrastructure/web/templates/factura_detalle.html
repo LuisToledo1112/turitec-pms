@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Factura {{ factura.folio }}{% endblock %}
+{% block contenido %}
+<div class="tarjeta factura">
+  <h1>Comprobante de pago — Factura {{ factura.folio }}</h1>
+  <p><strong>Posada Turitec</strong> · Tuxtla Gutiérrez, Chiapas · Fecha de emisión: {{ factura.fecha_emision.strftime('%d/%m/%Y') }}</p>
+  <hr>
+  {% if reserva %}
+  <p><strong>Huésped:</strong> {{ huesped.nombre }} · <strong>RFC:</strong> {{ factura.rfc or '—' }}{% if factura.correo %} · <strong>Correo:</strong> {{ factura.correo }}{% endif %}</p>
+  <p><strong>Reservación #{{ reserva.id }}:</strong> Habitación {{ habitacion.numero }} ({{ habitacion.tipo }}) · {{ reserva.fecha_entrada.strftime('%d/%m/%Y') }} → {{ reserva.fecha_salida.strftime('%d/%m/%Y') }} · {{ (reserva.fecha_salida - reserva.fecha_entrada).days }} noches</p>
+  {% if consumos %}
+  <h2>Consumos</h2>
+  <ul>
+    {% for c in consumos %}<li>{{ c.concepto }} — ${{ "%.2f"|format(c.monto) }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% elif venta %}
+  <p><strong>Cliente:</strong> {{ factura.cliente or venta.cliente }}{% if huesped %} · <strong>Huésped:</strong> {{ huesped.nombre }}{% endif %} · <strong>RFC:</strong> {{ factura.rfc or '—' }}{% if factura.correo %} · <strong>Correo:</strong> {{ factura.correo }}{% endif %}</p>
+  <p><strong>Venta {{ venta.folio }}:</strong> {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} · pagó con {{ venta.metodo_pago }}</p>
+  <h2>Conceptos</h2>
+  <ul>
+    {% for item in items %}<li>{{ item.concepto }} × {{ item.cantidad }} — ${{ "%.2f"|format(item.precio_unitario * item.cantidad) }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <table class="totales">
+    <tr><td>Subtotal</td><td>${{ "%.2f"|format(factura.subtotal) }} MXN</td></tr>
+    <tr><td>IVA (16%)</td><td>${{ "%.2f"|format(factura.iva) }} MXN</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>${{ "%.2f"|format(factura.total) }} MXN</strong></td></tr>
+  </table>
+  <p class="subtitulo">Comprobante generado por Turitec_Soft9K. Datos CFDI (RFC) guardados; el timbrado real no está incluido en esta demo.</p>
+  <button class="btn btn-azul btn-grande" onclick="window.print()">🖨️ Imprimir comprobante</button>
+  <a class="btn" href="{{ url_for('main.facturacion') }}">Volver a facturación</a>
+</div>
+{% endblock %}

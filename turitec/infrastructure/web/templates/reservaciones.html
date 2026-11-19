@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block titulo %}Reservaciones{% endblock %}
+{% block contenido %}
+<h1>Reservaciones</h1>
+<p class="subtitulo">Si una habitación ya está reservada en esas fechas, el sistema rechaza la reservación para evitar la sobreventa.</p>
+
+<section class="tarjeta">
+  <h2>{% if reserva_editar %}Editar reservación #{{ reserva_editar.id }}{% else %}Nueva reservación{% endif %}</h2>
+  <form method="post" {% if reserva_editar %}action="{{ url_for('main.editar_reservacion', rid=reserva_editar.id) }}"{% endif %} id="form-reserva" class="form-grid" {% if not reserva_editar %}data-validar-fechas{% endif %}>
+    <label>Habitación
+      <select name="habitacion_id" id="habitacion_id" required>
+        {% for h in habitaciones %}
+        <option value="{{ h.id }}" {% if reserva_editar and reserva_editar.habitacion_id == h.id %}selected{% endif %}>{{ h.numero }} · {{ h.tipo }} · ${{ "%.2f"|format(h.precio_noche) }}/noche</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Huésped
+      <select name="huesped_id" required>
+        {% for h in huespedes %}
+        <option value="{{ h.id }}" {% if reserva_editar and reserva_editar.huesped_id == h.id %}selected{% endif %}>{{ h.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Fecha de entrada <input type="date" name="fecha_entrada" id="fecha_entrada" required value="{{ reserva_editar.fecha_entrada.isoformat() if reserva_editar else '2026-11-10' }}"></label>
+    <label>Fecha de salida <input type="date" name="fecha_salida" id="fecha_salida" required value="{{ reserva_editar.fecha_salida.isoformat() if reserva_editar else '2026-11-12' }}"></label>
+    {% if not reserva_editar %}
+    <label>Origen
+      <select name="origen"><option value="directo">Directo</option><option value="booking">Booking</option><option value="airbnb">Airbnb</option></select>
+    </label>
+    {% endif %}
+    <p id="aviso-disponibilidad" class="aviso" aria-live="polite"></p>
+    <button type="submit" class="btn btn-azul btn-grande">{% if reserva_editar %}Guardar cambios{% else %}Crear reservación{% endif %}</button>
+    {% if reserva_editar %}<a class="btn" href="{{ url_for('main.reservaciones') }}">Cancelar</a>{% endif %}
+  </form>
+</section>
+
+<section class="tarjeta">
+  <table>
+    <thead><tr><th>#</th><th>Huésped</th><th>Habitación</th><th>Entrada</th><th>Salida</th><th>Total</th><th>Origen</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody>
+      {% for r in reservas %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ hues_dict[r.huesped_id].nombre }}</td>
+        <td>{{ hab_dict[r.habitacion_id].numero }}</td>
+        <td>{{ r.fecha_entrada.strftime('%d/%m/%Y') }}</td>
+        <td>{{ r.fecha_salida.strftime('%d/%m/%Y') }}</td>
+        <td>${{ "%.2f"|format(r.total) }}</td>
+        <td>{{ r.origen }}</td>
+        <td><span class="badge badge-{{ r.estado }}">{{ r.estado }}</span></td>
+        <td class="acciones">
+          {% if r.estado == 'reservada' %}
+          <form method="post" action="{{ url_for('main.check_in', rid=r.id) }}"><button class="btn btn-azul btn-pequeno">Check-in</button></form>
+          {% endif %}
+          {% if r.estado == 'check-in' %}
+          <form method="post" action="{{ url_for('main.check_out', rid=r.id) }}"><button class="btn btn-naranja btn-pequeno">Check-out</button></form>
+          {% endif %}
+          {% if r.estado in ('check-in', 'check-out') %}
+          <a class="btn btn-pequeno" href="{{ url_for('main.nueva_factura', rid=r.id) }}">Facturar</a>
+          {% endif %}
+          {% if r.estado in ('reservada', 'check-in') %}
+          <a class="btn btn-azul btn-pequeno" href="{{ url_for('main.editar_reservacion', rid=r.id) }}">Editar</a>
+          {% endif %}
+          {% if session.get('usuario_rol') == 'administrador' %}
+          {% if r.estado in ('reservada', 'check-in') %}
+          <form method="post" action="{{ url_for('main.cancelar_reservacion', rid=r.id) }}" data-confirm="¿Cancelar la reservación #{{ r.id }}?"><button class="btn btn-peligro btn-pequeno">Cancelar</button></form>
+          {% endif %}
+          {% if r.estado in ('reservada', 'cancelada') %}
+          <form method="post" action="{{ url_for('main.eliminar_reservacion', rid=r.id) }}" data-confirm="¿Eliminar la reservación #{{ r.id }}?"><button class="btn btn-peligro btn-pequeno">Eliminar</button></form>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

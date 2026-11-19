@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Datos para la factura{% endblock %}
+{% block contenido %}
+<h1>Datos para la factura</h1>
+{% if tipo == 'reservacion' %}
+<p class="subtitulo">Reservación #{{ reserva.id }} · Habitación {{ habitacion.numero }} ({{ habitacion.tipo }}) · {{ reserva.fecha_entrada.strftime('%d/%m/%Y') }} → {{ reserva.fecha_salida.strftime('%d/%m/%Y') }} · Total a facturar: <strong>${{ "%.2f"|format(total) }} MXN</strong> (IVA 16% incluido).</p>
+{% else %}
+<p class="subtitulo">Venta {{ venta.folio }} · {{ venta.fecha.strftime('%d/%m/%Y %H:%M') }} · Total a facturar: <strong>${{ "%.2f"|format(venta.total) }} MXN</strong> (IVA 16% incluido).</p>
+{% endif %}
+<p>Para generar la factura se necesitan los datos de quien la pide. Los que ya tenemos del huésped vienen llenos; corrige lo que falte.</p>
+
+<section class="tarjeta">
+  <form method="post" class="form-grid">
+    <label>Nombre o razón social *
+      <input name="cliente" required maxlength="150" placeholder="Ej. Ana María López" value="{{ cliente }}">
+    </label>
+    <label>RFC *
+      <input name="rfc" required maxlength="13" placeholder="Ej. LOMA850101ABC" value="{{ rfc }}" style="text-transform: uppercase">
+      <small>Si el cliente no tiene RFC, escribe XAXX010101000 (público en general).</small>
+    </label>
+    <label>Correo electrónico
+      <input type="email" name="correo" maxlength="150" placeholder="correo@ejemplo.mx" value="{{ correo }}">
+      <small>Opcional: ahí se le puede enviar la factura.</small>
+    </label>
+    <button type="submit" class="btn btn-azul btn-grande">📄 Generar factura</button>
+    {% if tipo == 'reservacion' %}
+    <a class="btn" href="{{ url_for('main.facturacion') }}">Cancelar</a>
+    {% else %}
+    <a class="btn" href="{{ url_for('main.ver_recibo', vid=venta.id) }}">Cancelar</a>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}
