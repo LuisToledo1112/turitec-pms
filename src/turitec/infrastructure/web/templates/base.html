@@ -3,44 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block titulo %}Panel{% endblock %} — Turitec_Soft9K</title>
+  <title>{% block titulo %}Panel{% endblock %} — Turitec · Posada Turitec</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+{# Nuevo diseño: barra lateral verde (patrón Mews) + contenido claro.
+   No cambia ninguna ruta, variable ni bloque Jinja: los templates hijos
+   siguen usando {% block titulo %}, {% block clase_cuerpo %},
+   {% block contenido %} y {% block scripts %} igual que antes.
+   El bloque "contenido" se define UNA sola vez: la barra lateral y la
+   franja superior solo se muestran cuando hay sesión. #}
 <body class="{% block clase_cuerpo %}{% endblock %}">
-  <header class="topbar fade-in">
-    <a class="logo" href="{{ url_for('main.dashboard') }}">🏨 Turitec_Soft9K</a>
-    {% if session.get('usuario_id') %}
+{% set ep = request.endpoint or '' %}
+<div class="app">
+  {% if session.get('usuario_id') %}
+  <aside class="sidebar">
+    <div class="sidebar-marca">
+      <a class="marca-nombre" href="{{ url_for('main.dashboard') }}">TURITEC<em> ·</em></a>
+      <span class="marca-sub">Posada · Tuxtla Gutiérrez</span>
+    </div>
     <nav>
-      <a href="{{ url_for('main.dashboard') }}">Panel</a>
-      <a href="{{ url_for('main.habitaciones') }}">Habitaciones</a>
-      <a href="{{ url_for('main.huespedes') }}">Huéspedes</a>
-      <a href="{{ url_for('main.reservaciones') }}">Reservaciones</a>
-      <a href="{{ url_for('main.calendario') }}">Calendario</a>
-      <a href="{{ url_for('main.facturacion') }}">Facturación</a>
-      <a href="{{ url_for('main.caja') }}">Caja</a>
-      {% if session.get('usuario_rol') == 'administrador' %}<a href="{{ url_for('main.reportes') }}">Reportes</a>{% endif %}
-      <span class="usuario">{{ session.get('usuario_nombre') }} ({{ session.get('usuario_rol') }})</span>
-      <a href="{{ url_for('main.logout') }}" class="btn btn-naranja btn-pequeno">Salir</a>
-    </nav>
-    {% endif %}
-  </header>
-
-  <main class="contenedor fade-in">
-    {% with mensajes = get_flashed_messages(with_categories=true) %}
-      {% if mensajes %}
-        <div id="toasts">
-          {% for categoria, mensaje in mensajes %}
-            <div class="toast toast-{{ categoria }}">{{ mensaje }}</div>
-          {% endfor %}
-        </div>
+      <p class="nav-seccion">Operación</p>
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'activo' if ep == 'main.dashboard' else '' }}"><span class="nav-icono">▦</span> Panel</a>
+      <a href="{{ url_for('main.reservaciones') }}" class="{{ 'activo' if ep in ('main.reservaciones', 'main.editar_reservacion') else '' }}"><span class="nav-icono">✎</span> Reservaciones</a>
+      <a href="{{ url_for('main.calendario') }}" class="{{ 'activo' if ep == 'main.calendario' else '' }}"><span class="nav-icono">▤</span> Calendario</a>
+      <a href="{{ url_for('main.habitaciones') }}" class="{{ 'activo' if ep in ('main.habitaciones', 'main.editar_habitacion') else '' }}"><span class="nav-icono">▣</span> Habitaciones</a>
+      <a href="{{ url_for('main.huespedes') }}" class="{{ 'activo' if ep in ('main.huespedes', 'main.editar_huesped') else '' }}"><span class="nav-icono">◉</span> Huéspedes</a>
+      <p class="nav-seccion">Ventas</p>
+      <a href="{{ url_for('main.caja') }}" class="{{ 'activo' if ep in ('main.caja', 'main.productos', 'main.editar_producto', 'main.corte') else '' }}"><span class="nav-icono">◈</span> Caja</a>
+      <a href="{{ url_for('main.facturacion') }}" class="{{ 'activo' if ep in ('main.facturacion', 'main.ver_factura', 'main.nueva_factura') else '' }}"><span class="nav-icono">≡</span> Facturación</a>
+      {% if session.get('usuario_rol') == 'administrador' %}
+      <a href="{{ url_for('main.reportes') }}" class="{{ 'activo' if ep in ('main.reportes', 'main.reporte_ventas') else '' }}"><span class="nav-icono">▧</span> Reportes</a>
       {% endif %}
-    {% endwith %}
-    {% block contenido %}{% endblock %}
-  </main>
+    </nav>
+    <div class="sidebar-usuario">
+      <strong>{{ session.get('usuario_nombre') }}</strong>
+      {{ session.get('usuario_rol') }} · <a href="{{ url_for('main.logout') }}">Salir</a>
+    </div>
+  </aside>
+  {% endif %}
 
-  <footer>
-    <p>Turitec_Soft9K · Sistema de gestión para hoteles boutique y posadas · Tuxtla Gutiérrez, Chiapas · DevTuritec — Equipo 10, UNACH</p>
-  </footer>
+  <div class="principal">
+    {% if session.get('usuario_id') %}
+    <div class="barra-superior">
+      <span><strong>Posada Turitec</strong> · Hotel boutique</span>
+      <span>{{ session.get('usuario_nombre') }} ({{ session.get('usuario_rol') }})</span>
+    </div>
+    {% endif %}
+    <main class="contenedor fade-in">
+      {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% if mensajes %}
+          <div id="toasts">
+            {% for categoria, mensaje in mensajes %}
+              <div class="toast toast-{{ categoria }}">{{ mensaje }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block contenido %}{% endblock %}
+    </main>
+    <footer>
+      <p><strong>Turitec</strong> · Sistema de gestión para hoteles boutique y posadas · Tuxtla Gutiérrez, Chiapas · DevTuritec — Equipo 10, UNACH</p>
+    </footer>
+  </div>
+</div>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>

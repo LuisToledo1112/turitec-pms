@@ -2,19 +2,36 @@
 {% block titulo %}Iniciar sesión{% endblock %}
 {% block clase_cuerpo %}pagina-login{% endblock %}
 {% block contenido %}
-<div class="tarjeta login-card">
-  <p class="login-eyebrow">Hotel boutique · Tuxtla Gutiérrez</p>
-  <h1>Turitec_Soft9K</h1>
-  <div class="login-regla"></div>
-  <p class="subtitulo">Sistema de gestión para hoteles boutique y posadas</p>
-  <form method="post" action="{{ url_for('main.login') }}">
-    <label>Correo electrónico
-      <input type="email" name="email" required placeholder="Ingrese Correo electrónico">
-    </label>
-    <label>Contraseña
-      <input type="password" name="password" required placeholder="Ingrese Contraseña">
-    </label>
-    <button type="submit" class="btn btn-dorado btn-grande">Entrar</button>
-  </form>
+<div class="login-layout">
+  <div class="login-marca">
+    <p class="login-eyebrow">Hotel boutique · Tuxtla Gutiérrez</p>
+    <h1>TURITEC<em> ·</em></h1>
+    <p>La posada, sin libretas. Reservas, check-in y facturas en un solo lugar.</p>
+    <ul>
+      <li>Rack de disponibilidad, sin sobreventa</li>
+      <li>Check-in y check-out sin papel</li>
+      <li>Factura automática con IVA 16%</li>
+    </ul>
+  </div>
+  <div class="tarjeta login-card">
+    <p class="login-eyebrow">Posada Turitec</p>
+    <h2>Iniciar sesión</h2>
+    <div class="login-regla"></div>
+    <p class="subtitulo">Sistema de gestión para hoteles boutique y posadas</p>
+    <form method="post" action="{{ url_for('main.login') }}">
+      <label>Correo electrónico
+        <input type="email" name="email" required placeholder="tu@correo.mx">
+      </label>
+      <label>Contraseña
+        <input type="password" name="password" required placeholder="Tu contraseña">
+      </label>
+      <button type="submit" class="btn btn-dorado btn-grande">Entrar</button>
+    </form>
+    <div class="demo">
+      <h3>Usuarios demo</h3>
+      <p>Admin: <strong>admin@turitec.mx</strong> / <strong>admin123</strong><br>
+      Recepción: <strong>recepcion@turitec.mx</strong> / <strong>recepcion123</strong></p>
+    </div>
+  </div>
 </div>
 {% endblock %}

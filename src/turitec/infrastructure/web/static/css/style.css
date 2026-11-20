@@ -452,3 +452,51 @@ footer strong { color: var(--verde); }
   .barra-superior { padding: 12px 16px; }
   .rack-hab { min-width: 96px !important; }
 }
+
+/* ---------- Navegación animada (decente: suave, corta, sin adornos) ----------
+   Todo es CSS + un poco de JS en app.js (transición al salir de la página).
+   Duraciones cortas (140–350 ms) para que en recepción no se sienta lento.
+   Con "Reducir movimiento" activado en el sistema, no se anima nada. */
+.sidebar { animation: entrarBarra .45s ease both; }
+@keyframes entrarBarra { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.sidebar nav a {
+  position: relative;
+  transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.sidebar nav a:hover { transform: translateX(3px); }
+.sidebar nav a .nav-icono { transition: transform .18s ease; }
+.sidebar nav a:hover .nav-icono { transform: scale(1.15); }
+.sidebar nav a.activo::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--dorado);
+  animation: entrarIndicador .3s ease both;
+}
+@keyframes entrarIndicador { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.sidebar nav a.activo { animation: none; }
+
+/* Entrada de cada página: sube suave, sin parpadeo. */
+.fade-in { animation: fadeUp .45s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* Salida de página (la pone app.js al pulsar un enlace del menú). */
+body.saliendo .principal { opacity: 0; transform: translateY(6px); transition: opacity .14s ease, transform .14s ease; }
+.principal { transition: opacity .2s ease, transform .2s ease; }
+
+/* Tarjetas de resumen: levanta apenas al pasar el cursor. */
+.stat { transition: transform .18s ease, box-shadow .18s ease; }
+.stat:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(23, 53, 43, .06), 0 14px 30px rgba(23, 53, 43, .1); }
+
+/* Toasts entran deslizando desde arriba. */
+.toast { animation: entrarToast .35s ease both; }
+@keyframes entrarToast { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* Rack: la celda resalta suave, no de golpe. */
+.rack-celda { transition: outline .12s ease, transform .12s ease; }
+.rack tbody tr:hover .rack-celda { transform: scale(1.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

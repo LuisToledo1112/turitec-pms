@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block titulo %}Panel{% endblock %}
 {% block contenido %}
+<p class="eyebrow">Posada Turitec · Tuxtla Gutiérrez</p>
 <h1>Panel de control</h1>
-<p class="subtitulo">Hoy es {{ hoy.strftime('%d/%m/%Y') }} · Posada Turitec, Tuxtla Gutiérrez</p>
+<p class="subtitulo">Hoy es {{ hoy.strftime('%d/%m/%Y') }} · Así amanece la posada</p>
 
 <div class="tarjetas-resumen">
-  <div class="tarjeta stat"><span class="numero">{{ ocupadas_hoy }}</span><span class="etiqueta">Habitaciones ocupadas hoy</span></div>
+  <div class="tarjeta stat"><span class="numero">{{ ocupadas_hoy }}</span><span class="etiqueta">Habitaciones ocupadas hoy</span><span class="detalle">de {{ habitaciones|length }} en total</span></div>
   <div class="tarjeta stat"><span class="numero">{{ activas }}</span><span class="etiqueta">Reservaciones activas</span></div>
-  <div class="tarjeta stat"><span class="numero">${{ "%.2f"|format(ingresos_mes) }}</span><span class="etiqueta">Ingresos del mes (MXN)</span></div>
+  <div class="tarjeta stat"><span class="numero"><small>$</small>{{ "%.2f"|format(ingresos_mes) }}</span><span class="etiqueta">Ingresos del mes (MXN)</span></div>
   <div class="tarjeta stat"><span class="numero">{{ tasa }}%</span><span class="etiqueta">Tasa de ocupación · nov 2026</span></div>
 </div>
 
@@ -16,7 +17,7 @@
     <h2>Próximas llegadas</h2>
     {% if proximas %}
     <table>
-      <thead><tr><th>Huésped</th><th>Habitación</th><th>Entrada</th><th>Salida</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Huésped</th><th>Hab.</th><th>Entrada</th><th>Salida</th><th>Estado</th></tr></thead>
       <tbody>
         {% for r in proximas %}
         <tr>

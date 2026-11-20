@@ -65,3 +65,21 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => { barra.style.height = alto; }, 120 + i * 30);
   });
 });
+
+  // Navegación animada (nuevo diseño): al pulsar un enlace de la barra
+  // lateral, la página se desvanece 140 ms antes de cambiar, para que el
+  // cambio no sea un corte seco. Si el usuario tiene "Reducir movimiento"
+  // activado, o el enlace abre en otra pestaña, navega directo sin animar.
+  // Si algo falla, el enlace sigue funcionando normal: esto nunca bloquea.
+  const reducirMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reducirMovimiento) {
+    document.querySelectorAll(".sidebar nav a").forEach((enlace) => {
+      enlace.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        if (enlace.href === window.location.href) return;
+        e.preventDefault();
+        document.body.classList.add("saliendo");
+        setTimeout(() => { window.location.href = enlace.href; }, 140);
+      });
+    });
+  }
